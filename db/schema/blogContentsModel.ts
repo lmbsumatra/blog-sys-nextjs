@@ -21,6 +21,6 @@ export const blogContentsTable = pgTable("contents", {
         .notNull()
         .references(() => blogsTable.id),
     sectionType: sectionTypeEnum("section_type").notNull(),
-    content: text("content"),
+    content: text("content").notNull(),
     index: integer("index").notNull(),
 });

@@ -1,17 +1,11 @@
+
+'use client';
+
 import { create } from 'zustand';
 import { z } from 'zod';
+import { signUpFormSchema } from '@/lib/validators';
+import { SignUpFormSchema } from '@/lib/types';
 
-const formSchema = z.object({
-    firstName: z.string().min(1, "First name is required"),
-    middleName: z.string().optional(),
-    lastName: z.string().min(1, "Last name is required"),
-    userName: z.string().min(1, "Username is required"),
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters long"),
-    confirmPassword: z.string().min(6, "Password must be at least 6 characters long"),
-});
-
-export type FormSchema = z.infer<typeof formSchema>;
 
 interface FormField {
     value: string;
@@ -21,12 +15,13 @@ interface FormField {
 }
 
 interface FormState {
-    formData: Record<keyof FormSchema, FormField>;
-    updateField: (field: keyof FormSchema, value: string) => void;
-    validateField: (field: keyof FormSchema) => void;
+    formData: Record<keyof SignUpFormSchema, FormField>;
+    updateField: (field: keyof SignUpFormSchema, value: string) => void;
+    validateField: (field: keyof SignUpFormSchema) => void;
+    resetSignUpForm: () => void;
 }
 
-const initialState: Record<keyof FormSchema, FormField> = {
+const initialState: Record<keyof SignUpFormSchema, FormField> = {
     firstName: { value: "", triggered: false, hasErrors: false, error: [] },
     middleName: { value: "", triggered: false, hasErrors: false, error: [] },
     lastName: { value: "", triggered: false, hasErrors: false, error: [] },
@@ -36,7 +31,7 @@ const initialState: Record<keyof FormSchema, FormField> = {
     confirmPassword: { value: "", triggered: false, hasErrors: false, error: [] },
 };
 
-export const useFormStore = create<FormState>((set, get) => ({
+export const useSignUpFormStore = create<FormState>((set, get) => ({
     formData: initialState,
     updateField: (field, value) => {
         set((state) => ({
@@ -54,7 +49,7 @@ export const useFormStore = create<FormState>((set, get) => ({
             Object.entries(formData).map(([key, value]) => [key, value.value])
         );
 
-        const result = formSchema.safeParse(fullData);
+        const result = signUpFormSchema.safeParse(fullData);
 
         if (!result.success) {
             const fieldErrors = result.error.errors
@@ -83,6 +78,7 @@ export const useFormStore = create<FormState>((set, get) => ({
                 }
             }));
         }
-    }
+    },
+    resetSignUpForm: () => set({ formData: initialState })
 
 }));

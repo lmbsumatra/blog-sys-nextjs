@@ -10,9 +10,9 @@ export const usersTable = pgTable("users", {
   userName: varchar("username", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).unique().notNull(),
   password: varchar("password", { length: 255 }).notNull(),
-  role: roleEnum("role").default("user"),
+  role: roleEnum("role").default("user").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date", precision: 3 }).$onUpdate(
     () => new Date()
-  ),
+  ).notNull(),
 });

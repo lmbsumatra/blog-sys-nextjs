@@ -1,26 +1,29 @@
 import { usersTable } from "./userModel";
 import { blogsTable } from "./blogsModel";
 import { blogContentsTable } from "./blogContentsModel";
+
 import { relations } from "drizzle-orm";
 
-export const usersRelations = (tables: { blogsTable: any }) => {
+export const usersRelations = (tables: { blogsTable: typeof blogsTable }) => {
   const { blogsTable } = tables;
   return relations(usersTable, ({ many }) => ({
-    blogs: many(blogsTable), 
+    blogs: many(blogsTable),
   }));
 };
 
-export const blogsRelations = (tables: { usersTable: any }) => {
-  const { usersTable } = tables;
-  return relations(blogsTable, ({ one }) => ({
-    user: one(usersTable), 
+export const blogsRelations = (tables: { usersTable: typeof usersTable, blogContentsTable: typeof blogContentsTable }) => {
+  const { usersTable, blogContentsTable } = tables;
+  return relations(blogsTable, ({ one, many }) => ({
+    user: one(usersTable),
+    contents: many(blogContentsTable),
   }));
 };
 
-export const blogContentsRelations = (tables: { blogsTable: any }) => {
+
+export const blogContentsRelations = (tables: { blogsTable: typeof blogsTable }) => {
   const { blogsTable } = tables;
   return relations(blogContentsTable, ({ one }) => ({
-    content: one(blogsTable, {
+    blog: one(blogsTable, {
       fields: [blogContentsTable.blogId],
       references: [blogsTable.id],
     }),

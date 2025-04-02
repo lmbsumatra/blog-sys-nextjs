@@ -1,21 +1,18 @@
 import { db } from "@/db";
 import { schema } from "@/db/schema/index";
+import { BlogContent } from "@/lib/types";
 import { eq, and } from "drizzle-orm";
 
-interface blog {
-
-}
-
-export const insert = async (data) => {
+export const insert = async (data: BlogContent[]): Promise<BlogContent[]> => {
     return await db.insert(schema.blogContentsTable).values(data).returning();
 };
 
-export const selectOne = async (blogId) => {
+export const selectOne = async (blogId: number) => {
     return await db.query.blogsTable.findFirst({
         where: eq(schema.blogsTable.id, blogId),
     });
 };
-export const deleteOne = async (blogId, userId) => {
+export const deleteOne = async (blogId: number, userId: number) => {
     return await db
         .delete(schema.blogsTable)
         .where(
@@ -27,6 +24,6 @@ export const deleteOne = async (blogId, userId) => {
         .returning();
 };
 
-export const selectAll = async (blogId) => {
+export const selectAll = async () => {
     return await db.query.blogsTable.findMany();
 };

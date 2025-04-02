@@ -5,7 +5,7 @@ import { roleEnum, usersTable } from "./userModel";
 
 // initialize relations
 const usersWithBlogsRelations = usersRelations({ blogsTable });
-const blogsWithUsersRelations = blogsRelations({ usersTable });
+const blogsWithUsersRelations = blogsRelations({ usersTable, blogContentsTable });
 const blogContentsWithBlogsRelations = blogContentsRelations({ blogsTable });
 
 export const schema = {

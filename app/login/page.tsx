@@ -1,14 +1,17 @@
 "use client";
 
 import { ChangeEvent, useState } from "react";
-import { useSignUpFormStore } from "../store/useSignUpFormStore";
-import { useSignupMutation } from "../hooks/useSignUpMutation";
+import { useLogInFormStore } from "../store/useLogInFormStore";
+import { useLogInMutation } from "../hooks/useLogInMutation";
+import useAuthStore from "../store/useAuthStore";
 
-const SignUp = () => {
-  const { formData, updateField, resetSignUpForm } = useSignUpFormStore();
+const LogIn = () => {
+  const { formData, updateField, resetLogInForm } = useLogInFormStore();
+  const LogInMutation = useLogInMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const SignUpMutation = useSignupMutation();
-
+  const { setAuth } = useAuthStore();
+  const token = useAuthStore((state) => state.token);
+  
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     updateField(name as keyof typeof formData, value);
@@ -17,27 +20,22 @@ const SignUp = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const userData = {
-      firstName: formData.firstName.value,
-      middleName: formData.middleName.value,
-      lastName: formData.lastName.value,
-      userName: formData.userName.value,
+    const creds = {
       email: formData.email.value,
       password: formData.password.value,
-      confirmPassword: formData.confirmPassword.value,
-      role: "user",
     };
 
     try {
       setIsSubmitting(true);
 
-      SignUpMutation.mutate(userData, {
-        onSuccess: () => {
-          alert("Signup Successful!");
-          resetSignUpForm();
+      LogInMutation.mutate(creds, {
+        onSuccess: (data) => {
+          alert("Login Successful!");
+          // resetLogInForm();
+          setAuth(data.token);
         },
         onError: (error) => {
-          alert(error.response?.data?.message || "Signup Failed!");
+          alert(error.response?.data?.message || "Login Failed!");
         },
       });
 
@@ -72,10 +70,10 @@ const SignUp = () => {
         disabled={isSubmitting}
         className="bg-blue-500 text-white p-2"
       >
-        {isSubmitting ? "Creating User..." : "Create User"}
+        {isSubmitting ? "Logging in..." : "Login"}
       </button>
     </form>
   );
 };
 
-export default SignUp;
+export default LogIn;

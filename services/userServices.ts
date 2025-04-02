@@ -1,20 +1,7 @@
 import { db } from "@/db";
 import { schema } from "@/db/schema/index";
+import { User } from "@/lib/types";
 import { eq, and } from "drizzle-orm";
-
-
-// Define the User type for better type safety
-interface User {
-    firstName: string;
-    middleName: string;
-    lastName: string;
-    userName: string;
-    email: string;
-    password: string;
-    role: 'user' | 'admin' | 'superadmin' | null;  // Restrict role to the enum values
-    createdAt?: Date;
-    updatedAt?: Date | null;
-}
 
 export const insert = async (data: User[]): Promise<User[]> => {
     return await db.insert(schema.usersTable).values(data).returning();

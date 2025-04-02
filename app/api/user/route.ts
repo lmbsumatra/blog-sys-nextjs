@@ -1,19 +1,30 @@
-import { insert, selectAll } from "@/services/userServices";
+import { TokenManager } from "@/lib/tokenManager";
+import { selectAll, selectOne } from "@/services/userServices";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
+
+  const token = req.headers.get("authorization")
+
   try {
-    const users = await selectAll();
-    return NextResponse.json(users, { status: 200 });
+    if (!req.headers.get("authorization") || !token) {
+      return NextResponse.json({ error: "Token is required." }, { status: 401 });
+    }
+
+    let verified;
+
+    if (token) {
+      verified = await TokenManager.verifyToken(token);
+    }
+
+    const user = await selectOne(verified.userId, verified.userRole);
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found!" }, { status: 404 });
+    }
+    return NextResponse.json({ user, role: user.role }, { status: 200 });
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
   }
-};
-
-export const POST = async (req: NextRequest) => {
-  const data = await req.json();
-  const user = await insert(data);
-  // Your POST logic here
-  return NextResponse.json({ message: "POST method is working!", data }, { status: 201 });
 };
