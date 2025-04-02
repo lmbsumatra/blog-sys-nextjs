@@ -1,9 +1,8 @@
-// "use client";
-
 import { User } from "@/lib/types";
 import axios from "axios";
 import { create } from "zustand";
 import { persist, PersistOptions } from "zustand/middleware";
+import Cookies from 'js-cookie';
 
 interface AuthStore {
     token: string | null;
@@ -26,6 +25,7 @@ interface FetchUserResponse {
 
 type AuthStorePersist = Pick<AuthStore, 'token' | 'role' | 'isAuthenticated'>;
 
+
 const useAuthStore = create<AuthStore>()(
     persist(
         (set, get) => ({
@@ -35,6 +35,12 @@ const useAuthStore = create<AuthStore>()(
             role: null,
 
             setAuth: async (token) => {
+                if (token) {
+                    Cookies.set('auth-token', token, { expires: 7, secure: true, sameSite: 'Strict' });
+                } else {
+                    Cookies.remove('auth-token');
+                }
+
                 set({ token, isAuthenticated: !!token });
 
                 if (token) {
@@ -47,12 +53,9 @@ const useAuthStore = create<AuthStore>()(
                 if (!token) return;
 
                 try {
-                    const response = await axios.get<FetchUserResponse>(
-                        "http://localhost:3000/api/user",
-                        {
-                            headers: { Authorization: token },
-                        }
-                    );
+                    const response = await axios.get<FetchUserResponse>("http://localhost:3000/api/user", {
+                        headers: { Authorization: token },
+                    });
 
                     if (!response || !response.data) {
                         get().logout();
@@ -71,13 +74,32 @@ const useAuthStore = create<AuthStore>()(
                 }
             },
 
-            logout: () =>
-                set({
-                    token: null,
-                    user: null,
-                    isAuthenticated: false,
-                    role: null
-                }),
+            logout: async () => {
+                try {
+                    const response = await fetch('/api/auth/logout', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Logout API returned an error');
+                    }
+
+                    Cookies.remove('auth-token');
+
+                    set({
+                        token: null,
+                        user: null,
+                        isAuthenticated: false,
+                        role: null
+                    });
+
+                    window.location.href = '/login';
+
+                } catch (err) {
+                    console.error('Error during logout:', err);
+                }
+            },
 
             isAdmin: () => get().role === "admin",
             isUser: () => get().role === "user",
@@ -94,7 +116,7 @@ const useAuthStore = create<AuthStore>()(
         }),
         {
             name: "auth-storage",
-            storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+            storage: typeof window !== 'undefined' ? window.localStorage : undefined, 
             partialize: (state): AuthStorePersist => ({
                 token: state.token,
                 role: state.role,
