@@ -11,13 +11,18 @@ export const usersRelations = (tables: { blogsTable: typeof blogsTable }) => {
   }));
 };
 
+
 export const blogsRelations = (tables: { usersTable: typeof usersTable, blogContentsTable: typeof blogContentsTable }) => {
   const { usersTable, blogContentsTable } = tables;
   return relations(blogsTable, ({ one, many }) => ({
-    user: one(usersTable),
+    user: one(usersTable, {
+      fields: [blogsTable.userId],   
+      references: [usersTable.id],   
+    }),
     contents: many(blogContentsTable),
   }));
 };
+
 
 
 export const blogContentsRelations = (tables: { blogsTable: typeof blogsTable }) => {

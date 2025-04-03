@@ -1,4 +1,3 @@
-// 'use client';
 import { LogInFormResponse, LogInFormSchema } from "@/lib/types";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";

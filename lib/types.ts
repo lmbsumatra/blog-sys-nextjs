@@ -15,6 +15,7 @@ export interface User {
 }
 
 export interface Blog {
+    id?: number,
     userId: number,
     title: string,
     description: string,
@@ -29,7 +30,8 @@ export interface Blog {
     'Accessories' |
     'Clothing' |
     'School Materials' |
-    'Others'
+    'Others',
+    status: 'unpublish' | 'published',
     createdAt?: Date; // ? question mark represents being optional
     updatedAt?: Date | null;
 }
@@ -64,4 +66,9 @@ export type SignUpFormSchema = z.infer<typeof signUpFormSchema>;
 
 export interface SignUpFormResponse {
     message: string,
+}
+
+export interface Section {
+    sectionType: string;
+    content: any;
 }

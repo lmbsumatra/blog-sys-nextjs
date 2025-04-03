@@ -1,5 +1,5 @@
 import { TokenManager } from "@/lib/tokenManager";
-import { selectAll, selectOne } from "@/services/userServices";
+import { selectOne } from "@/services/userServices";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {

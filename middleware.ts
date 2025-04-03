@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from 'next/headers';
 
 export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
@@ -97,7 +96,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
 }
 
-// Define the routes to apply the middleware to
 export const config = {
     matcher: [
         "/login",
