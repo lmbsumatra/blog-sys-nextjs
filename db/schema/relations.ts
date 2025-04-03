@@ -11,7 +11,6 @@ export const usersRelations = (tables: { blogsTable: typeof blogsTable }) => {
   }));
 };
 
-
 export const blogsRelations = (tables: { usersTable: typeof usersTable, blogContentsTable: typeof blogContentsTable }) => {
   const { usersTable, blogContentsTable } = tables;
   return relations(blogsTable, ({ one, many }) => ({
@@ -22,8 +21,6 @@ export const blogsRelations = (tables: { usersTable: typeof usersTable, blogCont
     contents: many(blogContentsTable),
   }));
 };
-
-
 
 export const blogContentsRelations = (tables: { blogsTable: typeof blogsTable }) => {
   const { blogsTable } = tables;

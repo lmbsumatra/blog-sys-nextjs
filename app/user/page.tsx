@@ -2,15 +2,21 @@
 
 import useAuthStore from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { useFetchBlogs } from "../hooks/useFetchBlogs";
-
 
 const User = () => {
   const { user, logout } = useAuthStore();
   const router = useRouter();
 
-  const { data: blogs } = useFetchBlogs(); 
+  const { data: blogs, error, isLoading, isError } = useFetchBlogs();
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError) {
+    return <div>Error: {error?.message}</div>;
+  }
 
   const handleLogout = () => {
     logout();
@@ -75,7 +81,7 @@ const User = () => {
                   {blog.description || "No description available."}
                 </p>
                 <a
-                  href={`/blogs/${blog.slug}`}
+                  href={`/user/${blog.slug}`}
                   className="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
                 >
                   Read more

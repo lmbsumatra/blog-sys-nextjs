@@ -100,7 +100,7 @@ const LogIn = () => {
           className={`cursor-pointer underline`}
           onClick={() => router.push(`/sign-up`)}
         >
-          Login here.
+          Signup here.
         </a>
       </span>
     </form>

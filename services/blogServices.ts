@@ -10,6 +10,7 @@ const insert = async (data: Blog[]): Promise<Blog[]> => {
 const selectOne = async (slug: string) => {
   return await db.query.blogsTable.findFirst({
     where: eq(schema.blogsTable.slug, slug),
+    with: { contents: true, user: true },
   })
 };
 
@@ -43,11 +44,11 @@ const selectAll = async () => {
 };
 
 
-const BlogContentServices = {
+const BlogServices = {
   insert,
   selectOne,
   deleteOne,
   selectAll
 };
 
-export default BlogContentServices;
+export default BlogServices;

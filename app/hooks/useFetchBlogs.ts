@@ -10,8 +10,10 @@ const fetchBlogs = async () => {
 };
 
 export const useFetchBlogs = () => {
-  return useQuery({
+  const { data, error, isLoading, isError } = useQuery({
     queryKey: ['blogs'],
     queryFn: fetchBlogs,  
   });
+
+  return { data, error, isLoading, isError };
 };
