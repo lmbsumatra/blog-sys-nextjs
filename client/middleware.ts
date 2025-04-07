@@ -100,11 +100,11 @@ export const config = {
     matcher: [
         "/login",
         "/sign-up",
-        // "/superadmin/:path*",
-        // "/admin/:path*",
-        // "/user/:path*",
-        // "/api/superadmin/:path*",
-        // "/api/admin/:path*",
-        // "/api/user/:path*"
+        "/superadmin/:path*",
+        "/admin/:path*",
+        "/user/:path*",
+        "/api/superadmin/:path*",
+        "/api/admin/:path*",
+        "/api/user/:path*"
     ],
 };

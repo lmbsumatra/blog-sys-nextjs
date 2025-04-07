@@ -1,5 +1,5 @@
-import { create } from "./createUser";
+import { signup } from "./createUser";
 import { login } from "./loginUser";
 import { logout } from "./logoutUser";
 
-export const AuthController = { create, login, logout };
+export const AuthController = { signup, login, logout };

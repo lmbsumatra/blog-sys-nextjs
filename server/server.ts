@@ -16,6 +16,7 @@ import BlogsRoutes from "./src/routes/BlogsRoutes";
 import AuthRoutes from "../server/src/routes/AuthRoutes";
 
 app.use(cors({
+  origin: `http://localhost:3000`,
   credentials: true
 }));
 

@@ -6,7 +6,7 @@ router.post('/login', AuthController.login);
 
 router.post('/logout', AuthController.logout);
 
-router.post("/reg", AuthController.create);
+router.post("/signup", AuthController.signup);
 
 router.get("/hello", async (res: Response): Promise<void> => {
     try {

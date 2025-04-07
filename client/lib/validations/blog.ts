@@ -64,3 +64,10 @@ const quote = z.object({
 });
 
 export const contentValidator = z.array(z.union([header, list, image, text, quote]));
+
+
+export const fullBlogValidator = blogValidator.extend({
+  content: contentValidator
+});
+
+export type FullBlogFormData = z.infer<typeof fullBlogValidator>;

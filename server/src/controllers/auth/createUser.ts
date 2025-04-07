@@ -6,7 +6,7 @@ import { userCreationValidator } from "../../validators/userCreationValidator";
 import { Request, Response } from "express";
 import { NewUser } from "../../types/type";
 
-export const create = async (req: Request, res: Response): Promise<void> => {
+export const signup = async (req: Request, res: Response): Promise<void> => {
   const { firstName, middleName, lastName, userName, email, password } = req.body;
 
   try {
