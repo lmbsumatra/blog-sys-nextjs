@@ -1,10 +1,11 @@
 "use client";
 
 import AuthorCard from "@/app/components/author-card/page";
-import NavBar from "@/app/components/navbar/page";
 import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useFetchBlogBySlug } from "@/app/hooks/useFetchBlogBySlug";
+import { ButtonNavigation } from "@/app/components/button/ButtonNavigation";
+import { isImageURL } from "@/app/helpers/isImageUrl";
 
 interface ErrorResponse {
   message: string | null;
@@ -63,12 +64,6 @@ const Blog = () => {
     );
   }
 
-  const handleNavigation = (nav: "back") => {
-    if (nav === "back") {
-      router.push("/");
-    }
-  };
-
   const renderSection = (section: any) => {
     switch (section.sectionType) {
       case "banner":
@@ -79,7 +74,7 @@ const Blog = () => {
             className="w-full max-h-[400px] overflow-hidden rounded-lg"
           >
             <img
-              src={section?.value || "default"}
+              src={isImageURL(section.value) ? `${section.value}` :  `http://localhost:3001/${section.value}` || "default"}
               alt="Blog section"
               className="w-full h-auto aspect-[16/9] object-cover rounded-lg"
             />
@@ -89,7 +84,7 @@ const Blog = () => {
         return (
           <h1
             key={section.id}
-            className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6"
+            className="text-2xl font-bold text-gray-00 mb-6 leading-tight"
           >
             {section.value}
           </h1>
@@ -98,7 +93,7 @@ const Blog = () => {
         return (
           <h1
             key={section.id}
-            className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-6"
+            className="text-4xl font-bold text-gray-900 mb-6 leading-tight"
           >
             {section.value}
           </h1>
@@ -125,19 +120,18 @@ const Blog = () => {
         return (
           <blockquote
             key={section.id}
-            className="border-l-4 border-blue-500 pl-6 italic text-gray-900 dark:text-gray-200"
+            className="border-l-4 border-blue-500 pl-6 py-2 my-6 bg-blue-50 italic text-gray-700 text-lg"
           >
             {section.value}
           </blockquote>
         );
       case "list":
         return (
-          <ul
-            key={section.id}
-            className="list-disc pl-4 text-gray-900 dark:text-gray-200"
-          >
+          <ul key={section.id} className=" mb-4 space-y-2 text-gray-800">
             {section.value.split("\n").map((item: string, index: number) => (
-              <li key={index}>{item}</li>
+              <li className="pl-2" key={index}>
+                {item}
+              </li>
             ))}
           </ul>
         );
@@ -152,7 +146,8 @@ const Blog = () => {
         isDarkMode ? "dark" : ""
       } min-h-screen bg-gray-50 dark:bg-gray-900`}
     >
-      <div className="container mx-auto p-8">
+      <div className="container mx-auto p-4">
+        <ButtonNavigation label="Back" path={`/`} />
         <article className="bg-white dark:bg-gray-800 shadow rounded p-8 space-y-6">
           {blog?.slice(0, 3).map(renderSection)}
           <AuthorCard author={user} />

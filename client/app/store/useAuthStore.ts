@@ -42,8 +42,8 @@ const useAuthStore = create<AuthStore>((set, get) => ({
 
     fetchUser: async () => {
         try {
-            const response = await axios.get<FetchUserResponse>("http://localhost:3000/api/user", {
-                withCredentials: true, // 👈 makes the browser include cookies
+            const response = await axios.get<FetchUserResponse>("http://localhost:3001/api/user", {
+                withCredentials: true, 
             });
 
             const { user, role } = response.data;

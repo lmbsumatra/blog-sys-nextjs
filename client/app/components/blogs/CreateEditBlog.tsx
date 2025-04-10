@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ButtonNavigation } from "../button/ButtonNavigation";
 
 const fullValidator = blogValidator.extend({
   content: contentValidator,
@@ -72,7 +73,9 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
   const onSubmit = async (data: FormData) => {
     try {
       if (mode === "create") {
-        await axios.post("/api/blogs", data);
+        await axios.post(`${process.env.NEXT_PUBLIC_BASE_API_URL}/api/blogs`, data, {
+          withCredentials: true
+        });
         alert("Blog created");
       } else {
         await axios.put(`/api/blogs/${blogSlug}`, data);
@@ -93,7 +96,7 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Blog form fields (title, description, etc.) */}
+      <ButtonNavigation label="Back" path={`/`}/>
       <div className="space-y-4">
         <div>
           <label htmlFor="title" className="block text-sm font-medium">
@@ -211,7 +214,6 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
         </Button>
       </div>
 
-      {/* Dynamic Sections */}
       <div className="space-y-4">
         {fields.map((field, index) => (
           <div
@@ -229,7 +231,6 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
               </Button>
             </div>
 
-            {/* Conditionally render input fields based on section type */}
             {field.sectionType === "text" ||
             field.sectionType === "header" ||
             field.sectionType === "quote" ||
@@ -263,7 +264,6 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
               />
             ) : null}
 
-            {/* Display validation errors for content */}
             {errors.content && errors.content[index]?.content && (
               <p className="text-sm text-red-500">
                 {typeof errors.content[index]?.content === "object"

@@ -6,8 +6,8 @@ interface JwtPayloadWithUserRole extends jwt.JwtPayload {
   userRole: string;
 }
 
-
 export const userAuthentication = async (req: any, res: any, next: any) => {
+
   try {
     const token = req.cookies['auth-token'];
 
@@ -21,9 +21,7 @@ export const userAuthentication = async (req: any, res: any, next: any) => {
       verified = await TokenManager.verifyToken(token);
     }
 
-    // Type guard to check if `verified` is an object of type JwtPayloadWithUserRole
     if (verified && typeof verified !== 'string') {
-      // Assert that `verified` is of type JwtPayloadWithUserRole
       const verifiedPayload = verified as JwtPayloadWithUserRole;
       req.token = { userId: verifiedPayload.userId, userRole: verifiedPayload.userRole };
       next();
