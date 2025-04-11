@@ -13,6 +13,14 @@ router.post(
   BlogsController.createBlog
 );
 
+router.put(
+  "/:blogSlug",
+  uploadSectionImages,
+  userAuthentication,
+  authorizedRoles("admin", "user"),
+  BlogsController.updateBlog
+);
+
 router.get(
   "/:slug",
   userAuthentication,

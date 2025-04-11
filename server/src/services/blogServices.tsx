@@ -11,6 +11,13 @@ const insert = async (data: NewBlog) => {
   }
 };
 
+const updateBlog = async (updates: Partial<Blog>, id: number) => {
+  return await db
+    .update(schema.blogsTable)
+    .set(updates)
+    .where(eq(schema.blogsTable.id, id));
+};
+
 const selectOne = async (slug: Blog["slug"]) => {
   try {
     const blog = await db.query.blogsTable.findFirst({
@@ -65,4 +72,10 @@ const selectAll = async (): Promise<Blog[]> => {
   }
 };
 
-export const blogServices = { insert, selectOne, selectAll, deleteOne };
+export const blogServices = {
+  insert,
+  updateBlog,
+  selectOne,
+  selectAll,
+  deleteOne,
+};

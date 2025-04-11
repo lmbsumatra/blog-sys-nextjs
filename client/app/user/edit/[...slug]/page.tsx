@@ -11,7 +11,7 @@ const EditBlogPage = () => {
       <h1 className="text-2xl font-bold text-gray-00 mb-6 leading-tight">
         Edit blog
       </h1>
-      <CreateEditBlog mode="edit" blogSlug={slug as string} />;
+      <CreateEditBlog mode="edit" blogSlug={slug as string} />
     </div>
   );
 };

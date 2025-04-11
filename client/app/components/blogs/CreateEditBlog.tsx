@@ -18,6 +18,32 @@ import {
 } from "@/components/ui/select";
 import { ButtonNavigation } from "../button/ButtonNavigation";
 
+interface BlogSection {
+  id: number;
+  sectionType: string;
+  value: string;
+  content: [];
+}
+
+type Category =
+  | "Personal"
+  | "Electronics"
+  | "Gadgets"
+  | "Documents"
+  | "ID"
+  | "Wearables"
+  | "Accessories"
+  | "Clothing"
+  | "School Materials"
+  | "Others";
+
+type EditorSection =
+  | { sectionType: "header"; content: string; index?: number }
+  | { sectionType: "list"; content: (string | undefined)[]; index?: number }
+  | { sectionType: "text"; content: string; index?: number }
+  | { sectionType: "image"; content: string; index?: number }
+  | { sectionType: "quote"; content: string; index?: number };
+
 const fullValidator = blogValidator.extend({
   content: contentValidator,
 });
@@ -56,29 +82,104 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
 
   useEffect(() => {
     if (mode === "edit" && blogSlug) {
-      axios.get(`/api/blogs/${blogSlug}`).then((res) => {
-        const blog = res.data;
-        reset({
-          title: blog.title,
-          description: blog.description,
-          banner: blog.banner,
-          slug: blog.slug,
-          category: blog.category,
-          content: blog.content || [],
+      axios
+        .get(`${process.env.NEXT_PUBLIC_BASE_API_URL}/api/blogs/${blogSlug}`, {
+          withCredentials: true,
+        })
+        .then((res) => {
+          const blogSections: BlogSection[] = res.data.blog;
+
+          const editorContent: EditorSection[] = blogSections
+            .filter((section) =>
+              ["text", "header", "list", "image", "quote"].includes(
+                section.sectionType
+              )
+            )
+            .map((section, index) => {
+              switch (section.sectionType) {
+                case "list":
+                  return {
+                    sectionType: "list",
+                    content: section.value
+                      .split(",")
+                      .map((item) => item.trim()),
+                    index,
+                  };
+                case "text":
+                case "header":
+                case "image":
+                case "quote":
+                  return {
+                    sectionType: section.sectionType,
+                    content: section.value,
+                    index,
+                  };
+                default:
+                  throw new Error(
+                    `Unknown sectionType: ${section.sectionType}`
+                  );
+              }
+            });
+
+          reset({
+            title:
+              blogSections.find((s) => s.sectionType === "title")?.value || "",
+            description:
+              blogSections.find((s) => s.sectionType === "description")
+                ?.value || "",
+            banner:
+              blogSections.find((s) => s.sectionType === "banner")?.value || "",
+            slug:
+              blogSections.find((s) => s.sectionType === "slug")?.value || "",
+            category: ((): Category | undefined => {
+              const raw = blogSections.find(
+                (s) => s.sectionType === "category"
+              )?.value;
+              const allowed: Category[] = [
+                "Personal",
+                "Electronics",
+                "Gadgets",
+                "Documents",
+                "ID",
+                "Wearables",
+                "Accessories",
+                "Clothing",
+                "School Materials",
+                "Others",
+              ];
+              return allowed.includes(raw as Category)
+                ? (raw as Category)
+                : undefined;
+            })(),
+            content: editorContent,
+          });
         });
-      });
     }
   }, [mode, blogSlug, reset]);
 
   const onSubmit = async (data: FormData) => {
+    console.log("submit clicked!", mode);
     try {
       if (mode === "create") {
-        await axios.post(`${process.env.NEXT_PUBLIC_BASE_API_URL}/api/blogs`, data, {
-          withCredentials: true
-        });
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/blogs`,
+          data,
+          {
+            withCredentials: true,
+          }
+        );
         alert("Blog created");
-      } else {
-        await axios.put(`/api/blogs/${blogSlug}`, data);
+      } else if (mode === "edit") {
+        console.log("edit ba???");
+        const response = await axios.put(
+          `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/blogs/${blogSlug}`,
+          data,
+          {
+            withCredentials: true,
+          }
+        );
+
+        console.log(response);
         alert("Blog updated");
       }
     } catch (err) {
@@ -94,9 +195,13 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
     }
   };
 
+  useEffect(() => {
+    console.log("Current form errors:", errors);
+  }, [errors]);
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <ButtonNavigation label="Back" path={`/`}/>
+      <ButtonNavigation label="Back" path={`/`} />
       <div className="space-y-4">
         <div>
           <label htmlFor="title" className="block text-sm font-medium">
@@ -162,17 +267,31 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
           <label htmlFor="category" className="block text-sm font-medium">
             Category
           </label>
-          <Select {...register("category")}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Personal">Personal</SelectItem>
-              <SelectItem value="Tech">Tech</SelectItem>
-              <SelectItem value="Education">Education</SelectItem>
-              <SelectItem value="Others">Others</SelectItem>
-            </SelectContent>
-          </Select>
+          <Controller
+            name="category"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Personal">Personal</SelectItem>
+                  <SelectItem value="Electronics">Electronics</SelectItem>
+                  <SelectItem value="Gadgets">Gadgets</SelectItem>
+                  <SelectItem value="Documents">Documents</SelectItem>
+                  <SelectItem value="ID">ID</SelectItem>
+                  <SelectItem value="Wearables">Wearables</SelectItem>
+                  <SelectItem value="Accessories">Accessories</SelectItem>
+                  <SelectItem value="Clothing">Clothing</SelectItem>
+                  <SelectItem value="School Materials">
+                    School Materials
+                  </SelectItem>
+                  <SelectItem value="Others">Others</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
       </div>
 
@@ -275,7 +394,11 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
         ))}
       </div>
 
-      <Button type="submit" disabled={isSubmitting}>
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        onClick={() => console.log("clicked???")}
+      >
         Submit
       </Button>
     </form>

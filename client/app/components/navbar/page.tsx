@@ -5,6 +5,7 @@ import useAuthStore from "@/app/store/useAuthStore";
 import { useRouter } from "next/navigation";
 
 const NavBar = ({ token }: { token: string | undefined }) => {
+  
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { logout } = useAuthStore();
   const router = useRouter();
