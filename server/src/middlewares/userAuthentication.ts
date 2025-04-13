@@ -1,18 +1,29 @@
 import jwt from "jsonwebtoken";
 import { TokenManager } from "../utils/TokenManager";
+import { NextFunction, Request, Response } from "express";
+import { HttpError } from "../utils/HttpError";
 
-interface JwtPayloadWithUserRole extends jwt.JwtPayload {
-  userId: string;
-  userRole: string;
+declare global {
+  namespace Express {
+    interface Request {
+      token?: {
+        userId: number;
+        userRole: 'user' | 'admin' | 'superadmin';
+      };
+    }
+  }
 }
 
-export const userAuthentication = async (req: any, res: any, next: any) => {
+interface JwtPayloadWithUserRole extends jwt.JwtPayload {
+  userId: number;
+  userRole:  'user' | 'admin' | 'superadmin';
+}
 
+export const userAuthentication = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.cookies['auth-token'];
-
     if (!token) {
-      return res.status(400).json({ error: "Token is required." });
+      throw new HttpError("Token is required.", 400);
     }
 
     let verified;
@@ -26,10 +37,9 @@ export const userAuthentication = async (req: any, res: any, next: any) => {
       req.token = { userId: verifiedPayload.userId, userRole: verifiedPayload.userRole };
       next();
     } else {
-      return res.status(401).json({ error: "Invalid token." });
+      throw new HttpError("Invalid token.", 400);
     }
   } catch (error) {
-    console.error("JWT Middleware Error:", error);
-    return res.status(500).json({ error: "Internal server error." });
+    next(error);
   }
 };

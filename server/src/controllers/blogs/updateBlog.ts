@@ -1,11 +1,11 @@
 import path from "path";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response, Express } from "express";
 import { blogServices } from "../../services/blogServices";
 import { blogContentServices } from "../../services/blogContentsServices";
 import { blogValidator } from "../../validators/blogValidator";
-import { ZodError } from "zod";
 import { generateSlug, generateUniqueSlug } from "../../helpers/generateUniqueSlug";
-import { NewBlog } from "../../types/type";
+import { NewBlog, UpdatedBlogDTO, BlogSection, ValidCategory } from "../../types/type";
+import { HttpError } from "../../utils/HttpError";
 
 interface UploadedFile {
     path: string;
@@ -13,44 +13,24 @@ interface UploadedFile {
 
 interface RequestWithUploads extends Request {
     uploadedFiles?: {
-        banner: UploadedFile;
-        sectionImages: UploadedFile[];
-    };
-    token?: {
-        userId: number;
-        userRole?: string;
+        banner: Express.Multer.File | null;
+        sectionImages: Express.Multer.File[];
     };
 }
 
-type BlogSection = {
-    sectionType: string;
-    content: string;
-};
 
-type ValidCategory =
-    | "Personal"
-    | "Electronics"
-    | "Gadgets"
-    | "Documents"
-    | "ID"
-    | "Wearables"
-    | "Accessories"
-    | "Clothing"
-    | "School Materials"
-    | "Others";
-
-export const updateBlog = async (req: RequestWithUploads, res: Response): Promise<void> => {
+export const updateBlog = async (req: RequestWithUploads, res: Response<UpdatedBlogDTO>, next: NextFunction): Promise<void> => {
     try {
         const { title, description, banner, slug, category, content } = req.body;
         const { blogSlug } = req.params;
 
         if (!req.token || !req.token.userId) {
-            res.status(401).json({ message: 'Unauthorized: User ID not found' });
+            throw new HttpError("User not found!", 401);
             return;
         }
 
-        if (!title || !description || !banner || !category || !content) {
-            res.status(400).json({ message: 'Missing required fields' });
+        if (!title || !description || !category || !content) {
+            throw new HttpError("Missing required fields!", 400);
             return;
         }
 
@@ -60,14 +40,14 @@ export const updateBlog = async (req: RequestWithUploads, res: Response): Promis
         ];
 
         if (!validCategories.includes(category as ValidCategory)) {
-            res.status(400).json({ message: "Invalid category" });
+            throw new HttpError("Invalid category!", 400);
             return;
         }
 
         const existingBlog = await blogServices.selectOne(blogSlug);
 
         if (!existingBlog || existingBlog.userId !== req.token.userId) {
-            res.status(403).json({ message: "Not authorized to edit this blog" });
+            throw new HttpError("You are not authorized to edit this blog!", 400);
             return;
         }
 
@@ -77,16 +57,16 @@ export const updateBlog = async (req: RequestWithUploads, res: Response): Promis
             ? await generateUniqueSlug(slug || await generateSlug(title))
             : existingBlog.slug;
 
-        const bannerPath = banner.startsWith("http")
+        const bannerPath = banner && typeof banner === 'string' && banner.startsWith("http")
             ? banner
             : req.uploadedFiles?.banner?.path
                 ? path.join("uploads", path.basename(req.uploadedFiles.banner.path))
-                : existingBlog.banner;
+                : "";
 
         const processContentImages = (
-            contentSections: BlogSection[],
+            contentSections: { sectionType: string; content: string }[],
             sectionImages: UploadedFile[]
-        ): BlogSection[] => {
+        ): { sectionType: string; content: string }[] => {
             let imageQueue = [...sectionImages];
             return contentSections.map(section => {
                 if (section.sectionType === "image" && imageQueue.length > 0) {
@@ -102,6 +82,8 @@ export const updateBlog = async (req: RequestWithUploads, res: Response): Promis
 
         const processedContent = processContentImages(content, req.uploadedFiles?.sectionImages || []);
 
+        const flatProcessedContent = processedContent.flat();
+
         const blogData: Partial<NewBlog> = {
             title,
             banner: bannerPath,
@@ -116,9 +98,9 @@ export const updateBlog = async (req: RequestWithUploads, res: Response): Promis
 
         await blogContentServices.deleteOne(existingBlog.id, req.token.userId);
 
-        const blogContents = [];
+        let blogContents
 
-        const validContentSections = processedContent.filter(
+        const validContentSections = flatProcessedContent.filter(
             (section) => ["image", "header", "list", "text", "quote"].includes(section.sectionType)
         );
 
@@ -130,30 +112,29 @@ export const updateBlog = async (req: RequestWithUploads, res: Response): Promis
                 index: i,
                 content: section.content,
             };
+
             const insertedContent = await blogContentServices.insert(contentData);
-            blogContents.push(insertedContent);
+
+            const formattedContent: BlogSection = {
+                blogId: existingBlog.id,
+                index: i + 6,
+                sectionType: section.sectionType as BlogSection["sectionType"],
+                content: section.sectionType === "list" && typeof section.content === "string"
+                    ? JSON.parse(section.content)
+                    : section.content
+            };
+
+            blogContents = formattedContent;
         }
 
         res.status(200).json({
             message: "Blog updated successfully!",
             blog: { ...existingBlog, ...blogData },
-            blogContent: blogContents,
+            blogContent: blogContents || null,
         });
+        return;
 
     } catch (error) {
-        if (error instanceof ZodError) {
-            res.status(400).json({
-                message: "Validation failed",
-                errors: error.flatten(),
-            });
-            return;
-        }
-        if (error instanceof Error) {
-            res.status(500).json({
-                message: "Internal Server Error",
-                error: error.message,
-            });
-            return;
-        }
+        next(error);
     }
 };

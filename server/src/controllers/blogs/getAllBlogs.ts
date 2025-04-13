@@ -1,15 +1,16 @@
+import { NextFunction, Request, Response } from "express";
 import { blogServices } from "../../services/blogServices";
+import { AllBlogsDTO } from "types/type";
 
-export const getAllBlogs = async (req: any, res: any) => {
+export const getAllBlogs = async (req: Request, res: Response<AllBlogsDTO>, next: NextFunction) => {
   try {
     const blogs = await blogServices.selectAll();
-
     res.status(201).json({
       message: "Blogs fetch successfully!",
       blogs,
     });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
+  } catch (error) {
+    next(error)
   }
 };
 

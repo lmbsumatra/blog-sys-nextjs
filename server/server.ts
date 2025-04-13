@@ -5,6 +5,7 @@ import path from "path";
 import express from "express";
 import type { Express, Request, Response } from "express";
 import cookieParser from 'cookie-parser';
+import { errorHandler } from "./src/middlewares/errorHandler"
 
 
 const app: Express = express();
@@ -47,6 +48,9 @@ app.get('/me', async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ message: 'Internal server error' }); // Handle errors properly
   }
 });
+
+
+app.use(errorHandler);
 
 app.listen(process.env.PORT, () => {
   console.log(

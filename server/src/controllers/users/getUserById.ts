@@ -1,47 +1,33 @@
+import { NextFunction, Request, Response } from "express";
 import { userServices } from "../../services/userServices";
+import { HttpError } from "../../utils/HttpError";
+import { UserDTO } from "types/type";
 
-export const getUserById = async (req: any, res: any) => {
-  const requiredFields = ["userId", "userRole"];
-  const { userId, userRole } = req.token;
+export const getUserById = async (req: Request, res: Response<UserDTO>, next: NextFunction): Promise<void> => {
+  const userId = Number(req?.token?.userId);
+  const userRole = req?.token?.userRole;
 
-  if (
-    !requiredFields.every(
-      (field) =>
-        field in req.token &&
-        req.token[field] !== null &&
-        req.token[field] !== ""
-    )
-  ) {
-    const missingOrEmptyFields = requiredFields.filter(
-      (field) =>
-        !(field in req.token) ||
-        req.token[field] === null ||
-        req.token[field] === ""
-    );
-    return res.status(400).json({
-      message: "Missing or empty required fields",
-      details: missingOrEmptyFields,
-    });
+  if (!req.token) {
+    throw new HttpError("Unauthorized", 401);
+  }
+
+  if (!userId || !userRole) {
+    { throw new HttpError("Missing or empty required fields", 400); }
   }
 
   try {
     const user = await userServices.selectOne(userId, userRole)
-
     if (!user || user === undefined) {
-      return res.status(404).json({
-        message: "User not found!",
-      });
+      throw new HttpError("User not found!", 400);
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       message: "Found user!",
       user: user,
     });
-  } catch (error: any) {
-    return res.status(500).json({
-      message: "Server error!",
-      details: error.message,
-    });
+    return;
+  } catch (error) {
+    next(error)
   }
 };
 

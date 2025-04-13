@@ -1,20 +1,15 @@
 import bcrypt from "bcrypt";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { TokenManager } from "../../utils/TokenManager";
 import { userServices } from "../../services/userServices";
+import { HttpError } from "../../utils/HttpError";
+import { LoginUserDTO } from "types/type";
 
-export const login = async (req: Request, res: Response): Promise<void> => {
+export const login = async (req: Request, res: Response<LoginUserDTO>, next: NextFunction): Promise<void> => {
   const { email, password } = req.body;
 
-  const missingFields = ["email", "password"].filter(
-    (field) => !req.body[field] || req.body[field].trim() === ""
-  );
-
-  if (missingFields.length > 0) {
-    res.status(400).json({
-      message: "Missing or empty required fields",
-      details: missingFields,
-    });
+  if (!email || !password) {
+    throw new HttpError("Missing or empty required fields!", 400);
     return;
   }
 
@@ -22,17 +17,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const user = await userServices.selectOneWithEmail(email);
 
     if (!user) {
-      res.status(404).json({
-        message: "User not found!",
-      });
+      throw new HttpError("User not found!", 404);
       return;
     }
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
-      res.status(401).json({
-        message: "Wrong password!",
-      });
+      throw new HttpError("Wrong Password!", 401);
       return;
     }
 
@@ -54,10 +45,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
     return;
   } catch (error) {
-    res.status(500).json({
-      message: "Server error!",
-      details: error instanceof Error ? error.message : "Unknown error",
-    });
+    next(error)
     return;
   }
 };

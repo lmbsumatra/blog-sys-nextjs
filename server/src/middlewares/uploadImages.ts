@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import multer from "multer";
+import { Request, Response, NextFunction } from "express";
 
 const uploadDir = path.join(__dirname, "../../public/uploads");
 
@@ -21,11 +22,11 @@ const storage = multer.diskStorage({
 
 const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
 
-const fileFilter = (req: any, file: any, cb: any) => {
+const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed."), false);
+    cb(new Error("Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed."));
   }
 };
 
@@ -35,7 +36,17 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
-export const uploadSectionImages = (req: any, res: any, next: any) => {
+// 👇 Custom type extension for Request
+declare module "express-serve-static-core" {
+  interface Request {
+    uploadedFiles?: {
+      banner: Express.Multer.File | null;
+      sectionImages: Express.Multer.File[];
+    };
+  }
+}
+
+export const uploadSectionImages = (req: Request, res: Response, next: NextFunction):void => {
   const uploadFields = [
     { name: "banner", maxCount: 1 },
     { name: "sectionImages", maxCount: 20 },
@@ -43,18 +54,20 @@ export const uploadSectionImages = (req: any, res: any, next: any) => {
 
   const multerUpload = upload.fields(uploadFields);
 
-  multerUpload(req, res, (err) => {
+  multerUpload(req, res, (err: any) => {
     if (err) {
       console.error("Multer Upload Error:", err);
       return res.status(400).json({ error: err.message });
     }
 
-    const uploadedFiles = {
-      banner: req.files?.["banner"]?.[0] ?? null,
-      sectionImages: req.files?.["sectionImages"] ?? [],
+    const files = req.files as {
+      [fieldname: string]: Express.Multer.File[];
     };
 
-    req.uploadedFiles = uploadedFiles;
+    req.uploadedFiles = {
+      banner: files?.["banner"]?.[0] ?? null,
+      sectionImages: files?.["sectionImages"] ?? [],
+    };
 
     try {
       req.body.content = typeof req.body.content === "string"

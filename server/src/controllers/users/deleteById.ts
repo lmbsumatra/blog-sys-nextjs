@@ -1,24 +1,21 @@
+import { HttpError } from "../../utils/HttpError";
 import { userServices } from "../../services/userServices";
+import { NextFunction, Request, Response } from "express";
 
-export const deleteUser = async (req: any, res: any) => {
-  const userId = req.params.userId;
+export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+  const userId = Number(req.params.userId);
 
   if (!req.params.userId || !userId) {
-    res.status(400).json({ error: "userId is required." });
+    throw new HttpError("User ID is required!", 400);
   }
 
   try {
     const deletedUser = await userServices.deleteUser(userId);
-
     res.status(201).json({
       message: "User deleted successfully",
       deletedUser,
     });
   } catch (error) {
-    console.error("Error creating user:", error);
-    res.status(500).json({
-      error: "Failed to create user",
-      details: "Internal Server Error",
-    });
+    next(error)
   }
 };

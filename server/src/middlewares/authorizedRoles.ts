@@ -1,18 +1,24 @@
-export const authorizedRoles = (...allowedRoles: any) => {
-  return (req: any, res:any, next:any) => {
+import { Request, Response, NextFunction, RequestHandler } from "express";
+import { HttpError } from "../utils/HttpError";
+
+
+
+export const authorizedRoles = (...allowedRoles: string[]): RequestHandler => {
+  return (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (!allowedRoles.includes(req.token.userRole)) {
-        return res.status(401).json({ message: "You have no access here." });
+      const userRole = req.token?.userRole;
+
+      if (!userRole) {
+        throw new HttpError("Role is required.", 401);
       }
 
-      if (!req.token.userRole) {
-        return res.status(401).json({ message: "Role is required." });
+      if (!allowedRoles.includes(userRole)) {
+        throw new HttpError("You have no access here.", 403);
       }
 
       next();
     } catch (error) {
-      return res.status(401).json({ message: error });
+      next(error);
     }
   };
 };
-

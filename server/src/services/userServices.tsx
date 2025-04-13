@@ -4,7 +4,8 @@ import { db } from "../db/db_connection";
 import { schema } from "../db/schemas";
 
 const insert = async (data: NewUser) => {
-  return await db.insert(schema.usersTable).values(data);
+  const user = await db.insert(schema.usersTable).values(data);
+  return user.rows[0]; // mystery :: why do i still need to extract???
 };
 
 const selectAll = async (): Promise<User[]> => {
@@ -30,10 +31,11 @@ const selectOneWithEmail = async (email: string): Promise<User | undefined> => {
 };
 
 const updateUser = async (updates: Partial<NewUser>, id: number) => {
-  return await db
+  const result = await db
     .update(schema.usersTable)
     .set(updates)
     .where(eq(schema.usersTable.id, id));
+  return result.rows[0];
 };
 
 const deleteUser = async (userId: number) => {

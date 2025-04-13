@@ -1,12 +1,12 @@
+import { NextFunction, Request, Response } from "express";
 import { userServices } from "../../services/userServices";
-export const getAll = async (req: any, res: any) => {
+import { AllUsersDTO } from "types/type";
+export const getAll = async (req: Request, res: Response<AllUsersDTO>, next: NextFunction) => {
   try {
     const users = await userServices.selectAll();
-
-    res.json({ users });
+    res.json({ message: "Fetched all users", users });
   } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ error: "Something went wrong" });
+    next(error)
   }
 };
 

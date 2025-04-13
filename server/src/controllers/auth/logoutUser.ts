@@ -1,17 +1,16 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
-export const logout = async (req: Request, res: Response): Promise<void> => {
+export const logout = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     res.clearCookie('auth-token', {
       httpOnly: true,
-      secure: false, 
+      secure: false,
       sameSite: 'lax',
     });
 
     res.json({ message: "Logged out successfully." });
     return;
   } catch (error) {
-    console.error(error); 
-    res.status(500).json({ message: "Internal server error" });
+    next(error)
   }
 };

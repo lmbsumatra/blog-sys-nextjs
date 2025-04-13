@@ -1,12 +1,14 @@
 import { ZodError } from "zod";
 import bcrypt from "bcrypt";
-const saltRounds = 10;
+
 import { userServices } from "../../services/userServices";
 import { userCreationValidator } from "../../validators/userCreationValidator";
-import { Request, Response } from "express";
-import { NewUser } from "../../types/type";
+import { NextFunction, Request, Response } from "express";
+import { NewUser, SignUpUserDTO, User } from "../../types/type";
 
-export const signup = async (req: Request, res: Response): Promise<void> => {
+const saltRounds = 10;
+
+export const signup = async (req: Request, res: Response<SignUpUserDTO>, next: NextFunction): Promise<void> => {
   const { firstName, middleName, lastName, userName, email, password } = req.body;
 
   try {
@@ -19,7 +21,7 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
       password,
     });
 
-    const data = {
+    const data: NewUser = {
       firstName,
       middleName,
       lastName,
@@ -29,30 +31,17 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
       password: await bcrypt.hash(password, saltRounds),
     };
 
-    const addedUser = await userServices.insert(data as NewUser);
+    const user = await userServices.insert(data);
 
     res.status(201).json({
       message: "User created successfully",
-      addedUser,
-    });
-    return; 
-  } catch (error) {
-    if (error instanceof ZodError) {
-      console.log("Validation Failed:", error.flatten());
-
-      res.status(400).json({
-        message: "Validation failed",
-        errors: error.flatten(),
-      });
-      return;
-    }
-
-    console.error("Error creating user:", error);
-
-    res.status(500).json({
-      error: "Failed to create user",
-      details: "Internal Server Error",
+      user,
     });
     return;
+  } catch (error) {
+    if (error instanceof ZodError) {
+      next(error);
+    }
+    next(error);
   }
 };
