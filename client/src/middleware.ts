@@ -101,6 +101,7 @@ export const config = {
         "/",
         "/login",
         "/sign-up",
+        "/profile",
         "/superadmin/:path*",
         "/admin/:path*",
         "/blog/:path*",

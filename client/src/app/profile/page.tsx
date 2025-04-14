@@ -1,21 +1,14 @@
 "use client";
-
 import { useDeleteBlogBySlug } from "@/src/hooks/useDeleteBySlug";
 import { useFetchBlogs } from "@/src/hooks/useFetchBlogs";
 import useAuthStore from "@/src/store/useAuthStore";
 import { useRouter } from "next/navigation";
-import { BlogCard } from "../components/blog-card/page";
+import { BlogCard } from "@/src/components/blog-card/page";
 
 const Home = () => {
   const { user } = useAuthStore();
-  const router = useRouter();
   const { data: blogs, error, isLoading, isError } = useFetchBlogs();
   const { mutate: deleteBlog, isError: deleteError } = useDeleteBlogBySlug();
-
-  const handleDelete = (slug: string) => {
-    // if (isDeleting) return;
-    deleteBlog(slug);
-  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -30,13 +23,13 @@ const Home = () => {
       <div className="container mx-auto px-[5%] py-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">
-            Welcome, {user?.firstName || "Anonymous"}!
+            Profile
           </h2>
         </div>
 
         <div className="flex flex-wrap justify-between gap-4">
           {blogs?.map((blog: any) => (
-            <BlogCard blog={blog} />
+            <BlogCard blog={blog} isYou={true}/>
           ))}
         </div>
       </div>

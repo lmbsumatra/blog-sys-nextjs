@@ -6,7 +6,7 @@ import { blogValidator } from "../../validators/blogValidator";
 import { generateSlug, generateUniqueSlug } from "../../helpers/generateUniqueSlug";
 import { BlogSection, NewBlog, ValidCategory } from "../../types/type";
 import { HttpError } from "../../utils/HttpError";
-import { validCategories } from "config/constants";
+import { validCategories } from "../../config/constants";
 
 interface UploadedFile {
   path: string;

@@ -16,10 +16,13 @@ export const ButtonNavigation = ({
 
   const handleNavigate = () => {
     if (label === "Back") {
-      if (window.history.state && window.history.state.idx > 0) {
+      if (
+        document.referrer &&
+        new URL(document.referrer).origin === window.location.origin
+      ) {
         router.back();
       } else {
-        router.push(`/blog`);
+        router.push(`/`);
       }
     } else {
       router.push(`http://localhost:3000/blog/${path}`);
@@ -27,7 +30,14 @@ export const ButtonNavigation = ({
   };
 
   return (
-    <Button type="button" variant="outline" onClick={() => handleNavigate()}>
+    <Button
+      type="button"
+      variant="outline"
+      onClick={(e) => {
+        e.stopPropagation();
+        handleNavigate();
+      }}
+    >
       {label}
     </Button>
   );

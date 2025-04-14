@@ -36,7 +36,7 @@ const LogIn = () => {
         onSuccess: (data) => {
           alert("Login Successful!");
           setAuth(data.token);
-          window.location.href = `/blog`;
+          window.location.href = `/`;
         },
         onError: (error) => {
           alert(error.response?.data?.message || "Login Failed!");
