@@ -57,7 +57,7 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
       title: "",
       description: "",
       banner: "",
-      slug: "",
+      // slug: "",
       category: "Personal",
       content: [],
     },
@@ -68,14 +68,16 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
     name: "content",
   });
 
-  // Store actual file objects for form submission
   const [bannerFile, setBannerFile] = useState<File | null>(null);
-  const [sectionImageFiles, setSectionImageFiles] = useState<Record<number, File>>({});
-  
-  // Store preview URLs for display purposes
+  const [sectionImageFiles, setSectionImageFiles] = useState<
+    Record<number, File>
+  >({});
+
   const [bannerPreview, setBannerPreview] = useState<string>("");
-  const [sectionPreviews, setSectionPreviews] = useState<Record<number, string>>({});
-  
+  const [sectionPreviews, setSectionPreviews] = useState<
+    Record<number, string>
+  >({});
+
   const bannerUrl = watch("banner");
 
   useEffect(() => {
@@ -99,18 +101,28 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
                 case "list":
                   return {
                     sectionType: "list",
-                    content: section.content
-                      .split("\n")
-                      .map((item: any) => item.trim()),
+                    content: Array.isArray(section.content)
+                      ? section.content 
+                      : section.content
+                          .split("\n")
+                          .map((item: any) => item.trim()), 
                     index,
                   };
+
                 case "text":
                 case "header":
                 case "quote":
-                case "image":
                   return {
                     sectionType: section.sectionType,
                     content: section.content,
+                    index,
+                  };
+                case "image":
+                  return {
+                    sectionType: section.sectionType,
+                    content: section.content.startsWith("http")
+                      ? section.content
+                      : `${process.env.NEXT_PUBLIC_BASE_API_URL}/${section.content}`,
                     index,
                   };
                 default:
@@ -130,9 +142,9 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
             banner:
               blogSections.find((s: any) => s.sectionType === "banner")
                 ?.content || "",
-            slug:
-              blogSections.find((s: any) => s.sectionType === "slug")
-                ?.content || "",
+            // slug:
+            //   blogSections.find((s: any) => s.sectionType === "slug")
+            //     ?.content || "",
             category: (() => {
               const raw = blogSections.find(
                 (s: any) => s.sectionType === "category"
@@ -155,13 +167,24 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
             })(),
             content: editorContent,
           });
-          
-          // Set banner preview if it exists
-          const bannerContent = blogSections.find((s: any) => s.sectionType === "banner")?.content;
+
+          const bannerContent = blogSections.find(
+            (s: any) => s.sectionType === "banner"
+          )?.content;
           if (bannerContent) {
             setBannerPreview(bannerContent);
           }
+
+          editorContent.forEach((section: any, index: number) => {
+            if (section.sectionType === "image" && section.content) {
+              const imageUrl = section.content.startsWith("http")
+                ? section.content
+                : `${process.env.NEXT_PUBLIC_BASE_API_URL}/${section.content}`;
+              setSectionPreviews((prev) => ({ ...prev, [index]: imageUrl }));
+            }
+          });
         })
+
         .catch((err) => {
           console.error("Error fetching blog data:", err);
         });
@@ -170,65 +193,72 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
 
   const onSubmit = async (data: FormData) => {
     try {
-      // Create FormData for file uploads
       const formData = new FormData();
-      
-      // Add banner file if available
+
       if (bannerFile) {
         formData.append("banner", bannerFile);
       } else if (data.banner) {
-        // If no file but URL provided, send as is
         formData.append("banner", data.banner);
       }
-      
-      // Add each section image file
+
       Object.entries(sectionImageFiles).forEach(([index, file]) => {
         formData.append("sectionImages", file);
       });
-      
-      // Add regular form data
+
       formData.append("title", data.title);
       formData.append("description", data.description);
-      formData.append("slug", data.slug);
+      // formData.append("slug", data.slug);
       formData.append("category", data.category);
-      
-      // Add content array - need to process it first
+
       const processedContent = data.content.map((section, idx) => {
         if (section.sectionType === "image" && sectionImageFiles[idx]) {
-          // If this section has a file upload, mark it for backend processing
           return {
             ...section,
             content: `[FILE_UPLOAD_${idx}]`,
-            sectionType: section.sectionType
           };
         }
+
+        if (section.sectionType === "list") {
+          return {
+            ...section,
+            content: Array.isArray(section.content)
+              ? section.content.join("\n")
+              : section.content,
+          };
+        }
+
         return section;
       });
-      
+
       formData.append("content", JSON.stringify(processedContent));
-      
+
       console.log("FormData entries:");
       for (let [key, value] of formData.entries()) {
         console.log(`${key}: ${value instanceof File ? value.name : value}`);
       }
-      
-      const url = mode === "create" 
-        ? `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/blogs` 
-        : `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/blogs/${blogSlug}`;
-      
+
+      const url =
+        mode === "create"
+          ? `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/blogs`
+          : `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/blogs/${blogSlug}`;
+
       const method = mode === "create" ? "post" : "put";
-      
+
       const response = await axios({
         method,
         url,
         data: formData,
         headers: {
-          "Content-Type": "multipart/form-data"
+          "Content-Type": "multipart/form-data",
         },
-        withCredentials: true
+        withCredentials: true,
       });
-      
-      alert(mode === "create" ? "Blog created successfully!" : "Blog updated successfully!");
+
+      alert(
+        mode === "create"
+          ? "Blog created successfully!"
+          : "Blog updated successfully!"
+      );
     } catch (err) {
       console.error("Submission error:", err);
       alert("Error submitting blog. Please check the console for details.");
@@ -237,7 +267,7 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
 
   const addSection = (type: FormData["content"][number]["sectionType"]) => {
     if (type === "list") {
-      append({ sectionType: type, content: [""] });
+      append({ sectionType: type, content: [""] }); 
     } else {
       append({ sectionType: type, content: "" });
     }
@@ -246,18 +276,17 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
   const handleMoveUp = (index: number) => {
     if (index > 0) {
       move(index, index - 1);
-      
-      // Also move the image files and previews
+
       if (sectionImageFiles[index]) {
-        const newSectionImageFiles = {...sectionImageFiles};
+        const newSectionImageFiles = { ...sectionImageFiles };
         const tempFile = newSectionImageFiles[index];
         newSectionImageFiles[index] = newSectionImageFiles[index - 1];
         newSectionImageFiles[index - 1] = tempFile;
         setSectionImageFiles(newSectionImageFiles);
       }
-      
+
       if (sectionPreviews[index]) {
-        const newSectionPreviews = {...sectionPreviews};
+        const newSectionPreviews = { ...sectionPreviews };
         const tempPreview = newSectionPreviews[index];
         newSectionPreviews[index] = newSectionPreviews[index - 1];
         newSectionPreviews[index - 1] = tempPreview;
@@ -269,18 +298,17 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
   const handleMoveDown = (index: number) => {
     if (index < fields.length - 1) {
       move(index, index + 1);
-      
-      // Also move the image files and previews
+
       if (sectionImageFiles[index]) {
-        const newSectionImageFiles = {...sectionImageFiles};
+        const newSectionImageFiles = { ...sectionImageFiles };
         const tempFile = newSectionImageFiles[index];
         newSectionImageFiles[index] = newSectionImageFiles[index + 1];
         newSectionImageFiles[index + 1] = tempFile;
         setSectionImageFiles(newSectionImageFiles);
       }
-      
+
       if (sectionPreviews[index]) {
-        const newSectionPreviews = {...sectionPreviews};
+        const newSectionPreviews = { ...sectionPreviews };
         const tempPreview = newSectionPreviews[index];
         newSectionPreviews[index] = newSectionPreviews[index + 1];
         newSectionPreviews[index + 1] = tempPreview;
@@ -292,34 +320,31 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
   const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    // Store the file for later submission
+
     setBannerFile(file);
-    
-    // Create preview URL
+
     const previewUrl = URL.createObjectURL(file);
     setBannerPreview(previewUrl);
-    
-    // Also update the form value
-    setValue("banner", file.name); // Just store the filename in the form
+
+    setValue("banner", file.name); 
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    // Store the file for later submission
-    const newSectionImageFiles = {...sectionImageFiles};
+
+    const newSectionImageFiles = { ...sectionImageFiles };
     newSectionImageFiles[index] = file;
     setSectionImageFiles(newSectionImageFiles);
-    
-    // Create preview URL
+
     const previewUrl = URL.createObjectURL(file);
-    const newSectionPreviews = {...sectionPreviews};
+    const newSectionPreviews = { ...sectionPreviews };
     newSectionPreviews[index] = previewUrl;
     setSectionPreviews(newSectionPreviews);
-    
-    // Update form value for display purposes
+
     setValue(`content.${index}.content`, file.name);
   };
 
@@ -330,14 +355,14 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
   };
 
   const removeImage = (index: number) => {
-    const newSectionImageFiles = {...sectionImageFiles};
+    const newSectionImageFiles = { ...sectionImageFiles };
     delete newSectionImageFiles[index];
     setSectionImageFiles(newSectionImageFiles);
-    
-    const newSectionPreviews = {...sectionPreviews};
+
+    const newSectionPreviews = { ...sectionPreviews };
     delete newSectionPreviews[index];
     setSectionPreviews(newSectionPreviews);
-    
+
     setValue(`content.${index}.content`, "");
   };
 
@@ -346,7 +371,11 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
   }, [errors]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" encType="multipart/form-data">
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-6"
+      encType="multipart/form-data"
+    >
       <ButtonNavigation label="Back" path={`/`} />
       <div className="space-y-4">
         <div>
@@ -383,13 +412,19 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
           <label htmlFor="banner" className="block text-sm font-medium">
             Banner Image
           </label>
-          
+
           {bannerPreview ? (
             <div className="relative mt-2 mb-2">
-              <img 
-                src={bannerPreview} 
-                alt="Banner preview" 
-                className="w-full h-48 object-cover rounded-md" 
+              <img
+                src={
+                  bannerPreview.startsWith("http")
+                    ? bannerPreview
+                    : bannerFile
+                    ? URL.createObjectURL(bannerFile)
+                    : `${process.env.NEXT_PUBLIC_BASE_API_URL}/${bannerPreview}`
+                }
+                alt="Banner preview"
+                className="w-full h-48 object-cover rounded-md"
               />
               <Button
                 type="button"
@@ -401,12 +436,14 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
               </Button>
             </div>
           ) : (
-            <div 
+            <div
               className="mt-2 border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
-              onClick={() => document.getElementById('banner-upload')?.click()}
+              onClick={() => document.getElementById("banner-upload")?.click()}
             >
               <ImageIcon className="h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-500">Click to upload banner image</p>
+              <p className="mt-2 text-sm text-gray-500">
+                Click to upload banner image
+              </p>
               <input
                 id="banner-upload"
                 type="file"
@@ -416,7 +453,7 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
               />
             </div>
           )}
-          
+
           <Input
             id="banner-url"
             {...register("banner")}
@@ -424,7 +461,7 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
             className="mt-2"
             onChange={(e) => {
               setValue("banner", e.target.value);
-              if (e.target.value.startsWith('http')) {
+              if (e.target.value.startsWith("http")) {
                 setBannerPreview(e.target.value);
                 setBannerFile(null);
               }
@@ -435,7 +472,7 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
           )}
         </div>
 
-        <div>
+        {/* <div>
           <label htmlFor="slug" className="block text-sm font-medium">
             Slug
           </label>
@@ -448,7 +485,7 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
           {errors.slug && (
             <p className="text-sm text-red-500">{errors.slug.message}</p>
           )}
-        </div>
+        </div> */}
 
         <div>
           <label htmlFor="category" className="block text-sm font-medium">
@@ -480,6 +517,166 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
             )}
           />
         </div>
+      </div>
+
+      <div className="space-y-4">
+        {fields.map((field, index) => {
+          const contentValue = watch(`content.${index}.content`);
+
+          return (
+            <div
+              key={field.id}
+              className="border p-4 rounded-md space-y-2 bg-gray-50"
+            >
+              <div className="flex justify-between items-center">
+                <p className="font-medium capitalize">{field.sectionType}</p>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleMoveUp(index)}
+                    disabled={index === 0}
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleMoveDown(index)}
+                    disabled={index === fields.length - 1}
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => remove(index)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+
+              {field.sectionType === "text" ||
+              field.sectionType === "header" ||
+              field.sectionType === "quote" ? (
+                <Controller
+                  name={`content.${index}.content`}
+                  control={control}
+                  render={({ field: controllerField }: { field: any }) => (
+                    <Textarea
+                      {...controllerField}
+                      placeholder={`Enter ${controllerField.sectionType}`}
+                    />
+                  )}
+                />
+              ) : field.sectionType === "image" ? (
+                <div>
+                  {sectionPreviews[index] ? (
+                    <div className="relative mt-2 mb-2">
+                      <img
+                        src={
+                          sectionPreviews[index]?.startsWith("http")
+                            ? sectionPreviews[index]
+                            : `${sectionPreviews[index]}`
+                        }
+                        alt="Section image"
+                        className="w-full h-48 object-cover rounded-md"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        className="absolute top-2 right-2"
+                        onClick={() => removeImage(index)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ) : (
+                    <div
+                      className="mt-2 border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
+                      onClick={() =>
+                        document
+                          .getElementById(`image-upload-${index}`)
+                          ?.click()
+                      }
+                    >
+                      <ImageIcon className="h-12 w-12 text-gray-400" />
+                      <p className="mt-2 text-sm text-gray-500">
+                        Click to upload image
+                      </p>
+                      <input
+                        id={`image-upload-${index}`}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleImageUpload(e, index)}
+                      />
+                    </div>
+                  )}
+                  <Controller
+                    name={`content.${index}.content`}
+                    control={control}
+                    render={({ field: controllerField }: { field: any }) => (
+                      <Input
+                        {...controllerField}
+                        placeholder="Or enter image URL"
+                        className="mt-2"
+                        onChange={(e) => {
+                          setValue(`content.${index}.content`, e.target.value);
+                          if (e.target.value.startsWith("http")) {
+                            const newPreviews = { ...sectionPreviews };
+                            newPreviews[index] = e.target.value;
+                            setSectionPreviews(newPreviews);
+
+                            const newFiles = { ...sectionImageFiles };
+                            delete newFiles[index];
+                            setSectionImageFiles(newFiles);
+                          }
+                        }}
+                      />
+                    )}
+                  />
+                </div>
+              ) : field.sectionType === "list" ? (
+                <Controller
+                  name={`content.${index}.content`}
+                  control={control}
+                  render={({ field: controllerField }) => (
+                    <Textarea
+                      value={
+                        Array.isArray(controllerField.value)
+                          ? controllerField.value.join("\n")
+                          : ""
+                      }
+                      placeholder="Enter list items separated by new lines"
+                      onChange={(e) => {
+                        const items = e.target.value
+                          .split("\n")
+                          .filter((item) => item.trim() !== "");
+                        setValue(
+                          `content.${index}.content`,
+                          items.length > 0 ? items : [""]
+                        );
+                      }}
+                    />
+                  )}
+                />
+              ) : null}
+
+              {errors.content && errors.content[index]?.content && (
+                <p className="text-sm text-red-500">
+                  {typeof errors.content[index]?.content === "object"
+                    ? errors.content[index]?.content?.message || "Invalid input"
+                    : String(errors.content[index]?.content)}
+                </p>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="space-y-4">
@@ -520,151 +717,7 @@ const CreateEditBlog = ({ mode, blogSlug }: CreateEditBlogProps) => {
         </Button>
       </div>
 
-      <div className="space-y-4">
-        {fields.map((field, index) => {
-          const contentValue = watch(`content.${index}.content`);
-          
-          return (
-          <div
-            key={field.id}
-            className="border p-4 rounded-md space-y-2 bg-gray-50"
-          >
-            <div className="flex justify-between items-center">
-              <p className="font-medium capitalize">{field.sectionType}</p>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleMoveUp(index)}
-                  disabled={index === 0}
-                >
-                  <ArrowUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleMoveDown(index)}
-                  disabled={index === fields.length - 1}
-                >
-                  <ArrowDown className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => remove(index)}
-                >
-                  Remove
-                </Button>
-              </div>
-            </div>
-
-            {field.sectionType === "text" ||
-            field.sectionType === "header" ||
-            field.sectionType === "quote" ? (
-              <Controller
-                name={`content.${index}.content`}
-                control={control}
-                render={({ field: controllerField }: { field: any }) => (
-                  <Textarea
-                    {...controllerField}
-                    placeholder={`Enter ${controllerField.sectionType}`}
-                  />
-                )}
-              />
-            ) : field.sectionType === "image" ? (
-              <div>
-                {sectionPreviews[index] ? (
-                  <div className="relative mt-2 mb-2">
-                    <img 
-                      src={sectionPreviews[index]} 
-                      alt="Section image" 
-                      className="w-full h-48 object-cover rounded-md" 
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      className="absolute top-2 right-2"
-                      onClick={() => removeImage(index)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ) : (
-                  <div 
-                    className="mt-2 border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50"
-                    onClick={() => document.getElementById(`image-upload-${index}`)?.click()}
-                  >
-                    <ImageIcon className="h-12 w-12 text-gray-400" />
-                    <p className="mt-2 text-sm text-gray-500">Click to upload image</p>
-                    <input
-                      id={`image-upload-${index}`}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleImageUpload(e, index)}
-                    />
-                  </div>
-                )}
-                <Controller
-                  name={`content.${index}.content`}
-                  control={control}
-                  render={({ field: controllerField }: { field: any }) => (
-                    <Input
-                      {...controllerField}
-                      placeholder="Or enter image URL"
-                      className="mt-2"
-                      onChange={(e) => {
-                        setValue(`content.${index}.content`, e.target.value);
-                        if (e.target.value.startsWith('http')) {
-                          const newPreviews = {...sectionPreviews};
-                          newPreviews[index] = e.target.value;
-                          setSectionPreviews(newPreviews);
-                          
-                          // Remove the file since we're using a URL
-                          const newFiles = {...sectionImageFiles};
-                          delete newFiles[index];
-                          setSectionImageFiles(newFiles);
-                        }
-                      }}
-                    />
-                  )}
-                />
-              </div>
-            ) : field.sectionType === "list" ? (
-              <Controller
-                name={`content.${index}.content`}
-                control={control}
-                render={({ field: controllerField }) => (
-                  <Textarea
-                    value={Array.isArray(controllerField.value) ? controllerField.value.join('\n') : ''}
-                    placeholder="Enter list items separated by new lines"
-                    onChange={(e) => {
-                      const items = e.target.value.split('\n').filter(item => item.trim() !== '');
-                      setValue(`content.${index}.content`, items.length > 0 ? items : ['']);
-                    }}
-                  />
-                )}
-              />
-            ) : null}
-
-            {errors.content && errors.content[index]?.content && (
-              <p className="text-sm text-red-500">
-                {typeof errors.content[index]?.content === "object"
-                  ? errors.content[index]?.content?.message || "Invalid input"
-                  : String(errors.content[index]?.content)}
-              </p>
-            )}
-          </div>
-        )})}
-      </div>
-
-      <Button
-        type="submit"
-        disabled={isSubmitting}
-      >
+      <Button type="submit" disabled={isSubmitting}>
         {mode === "create" ? "Create Blog" : "Update Blog"}
       </Button>
     </form>

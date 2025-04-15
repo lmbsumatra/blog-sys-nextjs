@@ -12,11 +12,6 @@ const Home = () => {
   const { data: blogs, error, isLoading, isError } = useFetchBlogs();
   const { mutate: deleteBlog, isError: deleteError } = useDeleteBlogBySlug();
 
-  const handleDelete = (slug: string) => {
-    // if (isDeleting) return;
-    deleteBlog(slug);
-  };
-
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -36,7 +31,7 @@ const Home = () => {
 
         <div className="flex flex-wrap justify-between gap-4">
           {blogs?.map((blog: any) => (
-            <BlogCard blog={blog} />
+            <BlogCard blog={blog} isYou={false} />
           ))}
         </div>
       </div>

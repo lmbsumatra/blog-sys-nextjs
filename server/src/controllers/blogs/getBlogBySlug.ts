@@ -24,7 +24,11 @@ export const getBlogById = async (req: Request, res: Response<BlogBySlugDTO>, ne
           blogId: blog.id,
           index: index + 6,
           sectionType: content.sectionType,
-          content: content.content,
+          content: content.sectionType === "list"
+            ? Array.isArray(content.content)
+              ? content.content.join("\n") // Convert array to string
+              : content.content
+            : content.content,
         };
       }),
     ];

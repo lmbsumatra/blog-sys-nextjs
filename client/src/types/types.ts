@@ -1,4 +1,4 @@
-import { logInFormSchema } from "./validations/validators";
+
 import { z } from 'zod';
 
 export interface User {
@@ -60,7 +60,7 @@ export interface LogInFormResponse {
     // userRole: object,
 }
 
-import { signUpFormSchema } from '@/lib/validations/validators';
+import { logInFormSchema, signUpFormSchema } from '../lib/validations/auth';
 
 export type SignUpFormSchema = z.infer<typeof signUpFormSchema>;
 

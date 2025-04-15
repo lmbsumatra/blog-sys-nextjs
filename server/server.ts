@@ -6,7 +6,7 @@ import express from "express";
 import type { Express, Request, Response } from "express";
 import cookieParser from 'cookie-parser';
 import { errorHandler } from "./src/middlewares/errorHandler"
-
+import morganMiddleware from "./src/middlewares/morgan"
 
 const app: Express = express();
 dotenv.config();
@@ -17,10 +17,15 @@ import BlogsRoutes from "./src/routes/BlogsRoutes";
 import AuthRoutes from "../server/src/routes/AuthRoutes";
 
 app.use(cors({
-  origin: `http://localhost:3000`,
-  credentials: true
+  origin: 'http://localhost:3000', //
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // allowed HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // allowed headers
+  credentials: true, // allow cookies to be sent with requests
 }));
 
+app.use(morganMiddleware);
+
+// app.use(apiLimiter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -28,10 +33,6 @@ app.use(cookieParser());
 
 // image view
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
-
-app.use("/api/users", UsersRoutes);
-app.use("/api/blogs", BlogsRoutes);
-app.use("/api/auth", AuthRoutes);
 
 app.get('/me', async (req: Request, res: Response): Promise<void> => {
   const token = req.cookies?.token;
@@ -50,7 +51,12 @@ app.get('/me', async (req: Request, res: Response): Promise<void> => {
 });
 
 
+app.use("/api/users", UsersRoutes);
+app.use("/api/blogs", BlogsRoutes);
+app.use("/api/auth", AuthRoutes);
+
 app.use(errorHandler);
+
 
 app.listen(process.env.PORT, () => {
   console.log(

@@ -110,7 +110,7 @@ export interface BlogBySlugDTO {
 export interface UpdatedBlogDTO {
   message: string,
   blog: Blog, // adding [] after an interface makes it araay?
-  blogContent: BlogSection | null
+  blogContent: BlogSection[] | null
 }
 
 export interface AllUsersDTO {

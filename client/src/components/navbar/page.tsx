@@ -101,7 +101,6 @@ const NavBar = ({ token }: { token: string | undefined }) => {
             />
           </button>
 
-          {/* Avatar Dropdown Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Avatar className="cursor-pointer h-10 w-10">

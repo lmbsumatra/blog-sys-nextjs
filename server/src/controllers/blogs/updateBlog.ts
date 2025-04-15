@@ -18,12 +18,11 @@ interface RequestWithUploads extends Request {
     };
 }
 
-
 export const updateBlog = async (req: RequestWithUploads, res: Response<UpdatedBlogDTO>, next: NextFunction): Promise<void> => {
     try {
         const { title, description, banner, slug, category, content } = req.body;
         const { blogSlug } = req.params;
-
+        console.log(content)
         if (!req.token || !req.token.userId) {
             throw new HttpError("User not found!", 401);
             return;
@@ -98,7 +97,7 @@ export const updateBlog = async (req: RequestWithUploads, res: Response<UpdatedB
 
         await blogContentServices.deleteOne(existingBlog.id, req.token.userId);
 
-        let blogContents
+        let blogContents: BlogSection[] = []; // Initialize as empty array
 
         const validContentSections = flatProcessedContent.filter(
             (section) => ["image", "header", "list", "text", "quote"].includes(section.sectionType)
@@ -110,31 +109,32 @@ export const updateBlog = async (req: RequestWithUploads, res: Response<UpdatedB
                 blogId: existingBlog.id,
                 sectionType: section.sectionType as "image" | "header" | "list" | "text" | "quote",
                 index: i,
-                content: section.content,
+                content: Array.isArray(section.content) ? section.content : section.content,
             };
 
             const insertedContent = await blogContentServices.insert(contentData);
 
             const formattedContent: BlogSection = {
+
                 blogId: existingBlog.id,
                 index: i + 6,
                 sectionType: section.sectionType as BlogSection["sectionType"],
                 content: section.sectionType === "list" && typeof section.content === "string"
-                    ? JSON.parse(section.content)
-                    : section.content
+                    ? JSON.parse(section.content)  // Ensure it's parsed as an array if it's a list
+                    : section.content,
             };
+            { section.sectionType === "list" && console.log((section.content)) }
 
-            blogContents = formattedContent;
+            blogContents.push(formattedContent); // Push to array
         }
 
         res.status(200).json({
             message: "Blog updated successfully!",
             blog: { ...existingBlog, ...blogData },
-            blogContent: blogContents || null,
+            blogContent: blogContents.length ? blogContents : null, // Return array or null if empty
         });
-        return;
-
     } catch (error) {
         next(error);
     }
 };
+

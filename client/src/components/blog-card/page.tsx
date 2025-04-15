@@ -9,6 +9,7 @@ interface blog {
   blog: {
     id: number;
     slug: string;
+    title: string;
     banner: string;
     description: string;
     createdAt: string;
@@ -56,7 +57,7 @@ export const BlogCard = ({ blog, isYou }: blog) => {
         {/* blogdescription */}
         <div className="flex flex-col justify-between gap-2 flex-grow">
           <div>
-            <h3 className="text-lg font-semibold">This is sample title</h3>
+            <h3 className="text-lg font-semibold">{blog.title || "This is sample title"}</h3>
             <p className="text-sm text-gray-600">
               {blog.description || "No description available."}
             </p>
