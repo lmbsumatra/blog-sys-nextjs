@@ -5,8 +5,11 @@ import path from "path";
 import express from "express";
 import type { Express, Request, Response } from "express";
 import cookieParser from 'cookie-parser';
+import passport from "passport";
+
 import { errorHandler } from "./src/middlewares/errorHandler"
 import morganMiddleware from "./src/middlewares/morgan"
+import "./src/auth/google";
 
 const app: Express = express();
 dotenv.config();
@@ -30,6 +33,7 @@ app.use(morganMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(passport.initialize());
 
 // image view
 app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));

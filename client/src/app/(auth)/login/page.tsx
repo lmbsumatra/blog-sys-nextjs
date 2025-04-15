@@ -106,6 +106,17 @@ const LogIn = () => {
         {isSubmitting ? "Logging in..." : "Log In"}
       </button>
 
+      <button
+        type="submit"
+        className={`w-full py-2 rounded-lg text-white font-bold transition-colors bg-blue-500 hover:bg-blue-600
+        `}
+        onClick={() =>
+          (window.location.href = "http://localhost:3001/api/auth/google")
+        }
+      >
+        Login with Google
+      </button>
+
       <span>
         Don't have an account?{" "}
         <a
