@@ -22,7 +22,6 @@ export const updateBlog = async (req: RequestWithUploads, res: Response<UpdatedB
     try {
         const { title, description, banner, slug, category, content } = req.body;
         const { blogSlug } = req.params;
-        console.log(content)
         if (!req.token || !req.token.userId) {
             throw new HttpError("User not found!", 401);
             return;
@@ -123,7 +122,7 @@ export const updateBlog = async (req: RequestWithUploads, res: Response<UpdatedB
                     ? JSON.parse(section.content)  // Ensure it's parsed as an array if it's a list
                     : section.content,
             };
-            { section.sectionType === "list" && console.log((section.content)) }
+            { section.sectionType === "list"}
 
             blogContents.push(formattedContent); // Push to array
         }

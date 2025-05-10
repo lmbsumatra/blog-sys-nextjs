@@ -8,7 +8,7 @@ interface ButtonNavigationProps {
   path?: string;
 }
 
-export const ButtonNavigation = ({
+export const  ButtonNavigation = ({
   label = "",
   path = "",
 }: ButtonNavigationProps) => {

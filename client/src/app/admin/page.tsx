@@ -1,7 +1,9 @@
 "use client";
 
+import AdminPage from "../../features/admin/page";
+
 const Admin = () => {
-  return <div>HELLO ADMIN</div>;
+  return <AdminPage />;
 };
 
 export default Admin;

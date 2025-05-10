@@ -2,8 +2,8 @@
 'use client';
 
 import { create } from 'zustand';
-import { SignUpFormSchema } from '@/lib/types';
-import { signUpFormSchema } from '@/lib/validations/auth';
+import { SignUpFormSchema } from '../types/types';
+import { signUpFormSchema } from '../lib/validations/auth';
 
 
 interface FormField {
@@ -28,6 +28,7 @@ const initialState: Record<keyof SignUpFormSchema, FormField> = {
     email: { value: "", triggered: false, hasErrors: false, error: [] },
     password: { value: "", triggered: false, hasErrors: false, error: [] },
     confirmPassword: { value: "", triggered: false, hasErrors: false, error: [] },
+    role:  { value: "", triggered: false, hasErrors: false, error: [] },
 };
 
 export const useSignUpFormStore = create<FormState>((set, get) => ({

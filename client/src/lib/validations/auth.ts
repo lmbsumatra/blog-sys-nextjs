@@ -7,6 +7,7 @@ export const signUpFormSchema = z.object({
     firstName: z.string().min(1, { message: "First name is required" }),
     middleName: z.string().optional(),
     lastName: z.string().min(1, { message: "Last name is required" }),
+    role: z.string().min(1, {message: "Role is required."}),
     userName: z.string().min(3, { message: "Username must be at least 3 characters long" }),
     email: z.string().email({ message: "Invalid email address" }),
     password: passwordSchema,

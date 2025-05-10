@@ -25,9 +25,9 @@ export const googleCallbackController = async (req: Request, res: Response) => {
 
         res.cookie("auth-token", token, {
             httpOnly: true,
-            secure: false, // Change to true in production with HTTPS
+            secure: false, 
             sameSite: "lax",
-            maxAge: 1000 * 60 * 60, // 1 hour
+            maxAge: 1000 * 60 * 60, 
         });
 
         res.redirect("http://localhost:3000/auth/success");

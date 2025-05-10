@@ -36,7 +36,7 @@ const selectOne = async (slug: Blog["slug"]) => {
 };
 
 const deleteOne = async (slug: Blog["slug"], userId: number) => {
-  console.log(slug);
+
   try {
     const blog = await selectOne(slug);
 

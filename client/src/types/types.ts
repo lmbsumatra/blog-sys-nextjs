@@ -52,15 +52,8 @@ export interface TanStackProviderProps {
     children: React.ReactNode;
 }
 
-export type LogInFormSchema = z.infer<typeof logInFormSchema>;
 
-export interface LogInFormResponse {
-    message: string,
-    token: string,
-    // userRole: object,
-}
-
-import { logInFormSchema, signUpFormSchema } from '../lib/validations/auth';
+import { signUpFormSchema } from '../lib/validations/auth';
 
 export type SignUpFormSchema = z.infer<typeof signUpFormSchema>;
 

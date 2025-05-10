@@ -1,19 +1,9 @@
 "use client";
 
-import CreateEditBlog from "@/src/components/blogs/CreateEditBlog";
-import { useParams } from "next/navigation";
+import CreateBlogPage from "../../../features/blog/create/page";
 
-const CreateBlogPage = () => {
-  const { slug } = useParams();
-
-  return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold text-gray-00 mb-6 leading-tight">
-        Create blog
-      </h1>
-      <CreateEditBlog mode="create" blogSlug={slug as string} />
-    </div>
-  );
+const Create = () => {
+  return <CreateBlogPage />;
 };
 
-export default CreateBlogPage;
+export default Create;
